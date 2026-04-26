@@ -1,0 +1,20 @@
+{
+  "name": "daily-news-briefing",
+  "version": "1.0.0",
+  "description": "Briefing diario de noticias internacionales y de Chile, enviado por Gmail.",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dry-run": "DRY_RUN=true node src/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "nodemailer": "^6.9.14",
+    "openai": "^4.56.0",
+    "rss-parser": "^3.13.0"
+  }
+}

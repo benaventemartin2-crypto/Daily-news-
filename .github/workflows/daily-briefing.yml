@@ -1,0 +1,70 @@
+name: Daily News Briefing
+
+on:
+  # Cron en UTC. Chile observa horario de verano (UTC-3, ~sept-abr) e
+  # invierno (UTC-4, ~abr-sept). Para garantizar entrega cercana a las
+  # 07:00 hora Chile durante todo el año, programamos DOS ejecuciones
+  # diarias y dejamos que el job se "auto-omita" en la que no corresponde.
+  #
+  #  - 10:00 UTC -> 07:00 Chile en horario de VERANO (UTC-3)
+  #  - 11:00 UTC -> 07:00 Chile en horario de INVIERNO (UTC-4)
+  #
+  # Si prefieres una sola ejecución, comenta una de las dos y revisa
+  # manualmente al cambio de horario (~abril y ~septiembre).
+  schedule:
+    - cron: '0 10 * * *'
+    - cron: '0 11 * * *'
+
+  # Permite gatillarlo a mano desde la pestaña Actions.
+  workflow_dispatch:
+
+concurrency:
+  group: daily-briefing
+  cancel-in-progress: false
+
+jobs:
+  briefing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Skip if not 07:00 Chile time
+        id: timecheck
+        env:
+          TZ: America/Santiago
+        run: |
+          HOUR=$(date +%H)
+          echo "Hora actual en Chile: $HOUR"
+          if [ "$HOUR" != "07" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "No son las 07:00 en Chile (es $HOUR). Saliendo."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Node.js
+        if: steps.timecheck.outputs.skip != 'true' || github.event_name == 'workflow_dispatch'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        if: steps.timecheck.outputs.skip != 'true' || github.event_name == 'workflow_dispatch'
+        run: npm ci || npm install
+
+      - name: Run daily briefing
+        if: steps.timecheck.outputs.skip != 'true' || github.event_name == 'workflow_dispatch'
+        env:
+          OPENAI_API_KEY:      ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL:        ${{ vars.OPENAI_MODEL || 'gpt-4o-mini' }}
+          NEWS_API_KEY:        ${{ secrets.NEWS_API_KEY }}
+          GMAIL_USER:          ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD:  ${{ secrets.GMAIL_APP_PASSWORD }}
+          EMAIL_TO:            ${{ secrets.EMAIL_TO }}
+          TIMEZONE:            America/Santiago
+          BRIEFING_LANG:       es
+        run: npm start
