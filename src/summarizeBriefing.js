@@ -94,7 +94,7 @@ export async function summarizeBriefing(items, { apiKey, model, provider = 'gemi
     );
   }
 
-  const clientOpts = { apiKey, maxRetries: 0 };
+  const clientOpts = { apiKey, maxRetries: 0, timeout: 30_000 };
   if (providerCfg.baseURL) clientOpts.baseURL = providerCfg.baseURL;
   const client = new OpenAI(clientOpts);
 
