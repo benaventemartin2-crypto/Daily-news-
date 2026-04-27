@@ -4,7 +4,7 @@ import OpenAI from 'openai';
 const PROVIDERS = {
   gemini: {
     baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
-    defaultModel: 'gemini-2.0-flash-lite',
+    defaultModel: 'gemini-2.5-flash',
     envKey: 'GEMINI_API_KEY',
   },
   groq: {
@@ -68,6 +68,20 @@ Total: 400-600 palabras. No agregues introducción, conclusión, ni encabezados 
 Si una sección no tiene material suficiente en las noticias entregadas, ponla con menos items en lugar de inventar.`;
 }
 
+async function callWithRetry(fn, { retries = 3, baseDelayMs = 4000 } = {}) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const isRetryable = err?.status === 429 || err?.status >= 500;
+      if (!isRetryable || attempt === retries) throw err;
+      const delay = baseDelayMs * Math.pow(2, attempt);
+      console.warn(`[summarize] HTTP ${err.status} — retry en ${delay}ms (${attempt + 1}/${retries})`);
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+}
+
 export async function summarizeBriefing(items, { apiKey, model, provider = 'gemini', lang = 'es' }) {
   if (!items.length) return '_No se obtuvieron noticias en las últimas 24h._';
 
@@ -80,7 +94,7 @@ export async function summarizeBriefing(items, { apiKey, model, provider = 'gemi
     );
   }
 
-  const clientOpts = { apiKey };
+  const clientOpts = { apiKey, maxRetries: 0 };
   if (providerCfg.baseURL) clientOpts.baseURL = providerCfg.baseURL;
   const client = new OpenAI(clientOpts);
 
@@ -88,7 +102,7 @@ export async function summarizeBriefing(items, { apiKey, model, provider = 'gemi
   console.log(`[summarize] Provider: ${provider} | Modelo: ${resolvedModel} | Items: ${items.length}`);
   const t0 = Date.now();
 
-  const response = await client.chat.completions.create({
+  const response = await callWithRetry(() => client.chat.completions.create({
     model: resolvedModel,
     temperature: 0.2,
     max_tokens: 1500,
@@ -96,7 +110,7 @@ export async function summarizeBriefing(items, { apiKey, model, provider = 'gemi
       { role: 'system', content: SYSTEM_PROMPT },
       { role: 'user',   content: userPrompt },
     ],
-  });
+  }));
 
   const text = response.choices?.[0]?.message?.content?.trim() || '';
   const usage = response.usage || {};
