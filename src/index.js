@@ -12,25 +12,34 @@ function formatChileDate(tz = 'America/Santiago') {
   return fmt.format(new Date());
 }
 
+// Resuelve qué API key usar según el provider configurado.
+function resolveApiKey(provider) {
+  if (provider === 'gemini') return process.env.GEMINI_API_KEY;
+  if (provider === 'groq')   return process.env.GROQ_API_KEY;
+  return process.env.OPENAI_API_KEY;
+}
+
 async function main() {
   const t0 = Date.now();
 
+  const provider  = (process.env.AI_PROVIDER || 'gemini').toLowerCase();
   const cfg = {
-    openaiKey:     process.env.OPENAI_API_KEY,
-    openaiModel:   process.env.OPENAI_MODEL || 'gpt-4o-mini',
-    newsApiKey:    process.env.NEWS_API_KEY || '',
-    gmailUser:     process.env.GMAIL_USER,
-    gmailPass:     process.env.GMAIL_APP_PASSWORD,
-    emailTo:       process.env.EMAIL_TO || '',
-    maxToModel:    parseInt(process.env.MAX_NEWS_TO_MODEL || '40', 10),
-    lang:          process.env.BRIEFING_LANG || 'es',
-    tz:            process.env.TIMEZONE || 'America/Santiago',
-    dryRun:        String(process.env.DRY_RUN || '').toLowerCase() === 'true',
+    aiKey:      resolveApiKey(provider),
+    aiModel:    process.env.AI_MODEL || '',
+    provider,
+    newsApiKey: process.env.NEWS_API_KEY || '',
+    gmailUser:  process.env.GMAIL_USER,
+    gmailPass:  process.env.GMAIL_APP_PASSWORD,
+    emailTo:    process.env.EMAIL_TO || '',
+    maxToModel: parseInt(process.env.MAX_NEWS_TO_MODEL || '40', 10),
+    lang:       process.env.BRIEFING_LANG || 'es',
+    tz:         process.env.TIMEZONE || 'America/Santiago',
+    dryRun:     String(process.env.DRY_RUN || '').toLowerCase() === 'true',
   };
 
   console.log('==============================================');
   console.log(' Daily News Briefing');
-  console.log(` Modelo: ${cfg.openaiModel} | DryRun: ${cfg.dryRun}`);
+  console.log(` Provider: ${cfg.provider} | DryRun: ${cfg.dryRun}`);
   console.log('==============================================');
 
   // 1) Recolectar
@@ -42,9 +51,10 @@ async function main() {
 
   // 3) Resumir con IA
   const briefing = await summarizeBriefing(picked, {
-    apiKey: cfg.openaiKey,
-    model:  cfg.openaiModel,
-    lang:   cfg.lang,
+    apiKey:   cfg.aiKey,
+    model:    cfg.aiModel,
+    provider: cfg.provider,
+    lang:     cfg.lang,
   });
 
   console.log('\n----- BRIEFING -----\n');

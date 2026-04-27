@@ -59,8 +59,13 @@ jobs:
       - name: Run daily briefing
         if: steps.timecheck.outputs.skip != 'true' || github.event_name == 'workflow_dispatch'
         env:
+          # Provider de IA: gemini (gratis), groq (gratis) u openai (pago).
+          AI_PROVIDER:         ${{ vars.AI_PROVIDER || 'gemini' }}
+          AI_MODEL:            ${{ vars.AI_MODEL || '' }}
+          # Secrets por provider (solo configura el que uses)
+          GEMINI_API_KEY:      ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY:        ${{ secrets.GROQ_API_KEY }}
           OPENAI_API_KEY:      ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_MODEL:        ${{ vars.OPENAI_MODEL || 'gpt-4o-mini' }}
           NEWS_API_KEY:        ${{ secrets.NEWS_API_KEY }}
           GMAIL_USER:          ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASSWORD:  ${{ secrets.GMAIL_APP_PASSWORD }}

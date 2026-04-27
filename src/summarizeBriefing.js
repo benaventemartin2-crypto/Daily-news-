@@ -1,5 +1,24 @@
 import OpenAI from 'openai';
 
+// Providers con API compatible con OpenAI SDK.
+const PROVIDERS = {
+  gemini: {
+    baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
+    defaultModel: 'gemini-2.0-flash-lite',
+    envKey: 'GEMINI_API_KEY',
+  },
+  groq: {
+    baseURL: 'https://api.groq.com/openai/v1',
+    defaultModel: 'llama-3.3-70b-versatile',
+    envKey: 'GROQ_API_KEY',
+  },
+  openai: {
+    baseURL: null,
+    defaultModel: 'gpt-4o-mini',
+    envKey: 'OPENAI_API_KEY',
+  },
+};
+
 const SYSTEM_PROMPT = `Eres un editor ejecutivo que produce un briefing diario de noticias en español.
 Audiencia: profesional ocupado que NO quiere leer diarios completos.
 Reglas estrictas:
@@ -49,20 +68,28 @@ Total: 400-600 palabras. No agregues introducción, conclusión, ni encabezados 
 Si una sección no tiene material suficiente en las noticias entregadas, ponla con menos items en lugar de inventar.`;
 }
 
-export async function summarizeBriefing(items, { apiKey, model = 'gpt-4o-mini', lang = 'es' }) {
-  if (!apiKey) throw new Error('OPENAI_API_KEY no está configurada.');
-  if (!items.length) {
-    return '_No se obtuvieron noticias en las últimas 24h._';
+export async function summarizeBriefing(items, { apiKey, model, provider = 'gemini', lang = 'es' }) {
+  if (!items.length) return '_No se obtuvieron noticias en las últimas 24h._';
+
+  const providerCfg = PROVIDERS[provider] ?? PROVIDERS.gemini;
+  const resolvedModel = model || providerCfg.defaultModel;
+
+  if (!apiKey) {
+    throw new Error(
+      `Falta la API key para el provider "${provider}". Configura el secret ${providerCfg.envKey}.`
+    );
   }
 
-  const client = new OpenAI({ apiKey });
-  const userPrompt = buildUserPrompt(items, lang);
+  const clientOpts = { apiKey };
+  if (providerCfg.baseURL) clientOpts.baseURL = providerCfg.baseURL;
+  const client = new OpenAI(clientOpts);
 
-  console.log(`[summarize] Llamando a OpenAI (${model}) con ${items.length} noticias...`);
+  const userPrompt = buildUserPrompt(items, lang);
+  console.log(`[summarize] Provider: ${provider} | Modelo: ${resolvedModel} | Items: ${items.length}`);
   const t0 = Date.now();
 
   const response = await client.chat.completions.create({
-    model,
+    model: resolvedModel,
     temperature: 0.2,
     max_tokens: 1500,
     messages: [
