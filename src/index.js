@@ -19,10 +19,18 @@ function resolveApiKey(provider) {
   return process.env.OPENAI_API_KEY;
 }
 
+function autoDetectProvider() {
+  if (process.env.AI_PROVIDER) return process.env.AI_PROVIDER.toLowerCase();
+  if (process.env.GROQ_API_KEY)   return 'groq';
+  if (process.env.GEMINI_API_KEY) return 'gemini';
+  if (process.env.OPENAI_API_KEY) return 'openai';
+  return 'gemini';
+}
+
 async function main() {
   const t0 = Date.now();
 
-  const provider  = (process.env.AI_PROVIDER || 'gemini').toLowerCase();
+  const provider  = autoDetectProvider();
   const cfg = {
     aiKey:      resolveApiKey(provider),
     aiModel:    process.env.AI_MODEL || '',
