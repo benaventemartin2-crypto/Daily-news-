@@ -1,21 +1,8 @@
 name: Daily News Briefing
 
 on:
-  # Cron en UTC. Chile observa horario de verano (UTC-3, ~sept-abr) e
-  # invierno (UTC-4, ~abr-sept). Para garantizar entrega cercana a las
-  # 07:00 hora Chile durante todo el año, programamos DOS ejecuciones
-  # diarias y dejamos que el job se "auto-omita" en la que no corresponde.
-  #
-  #  - 10:00 UTC -> 07:00 Chile en horario de VERANO (UTC-3)
-  #  - 11:00 UTC -> 07:00 Chile en horario de INVIERNO (UTC-4)
-  #
-  # Si prefieres una sola ejecución, comenta una de las dos y revisa
-  # manualmente al cambio de horario (~abril y ~septiembre).
-  schedule:
-    - cron: '0 10 * * *'
-    - cron: '0 11 * * *'
-
-  # Permite gatillarlo a mano desde la pestaña Actions.
+  # Disparado externamente a las 7 AM Chile via val.town (workflow_dispatch).
+  # El cron de GitHub Actions fue removido por ser poco confiable en el plan gratuito.
   workflow_dispatch:
 
 concurrency:
