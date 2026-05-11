@@ -32,8 +32,10 @@ function resolveApiKey(provider) {
 
 function autoDetectProvider() {
   if (process.env.AI_PROVIDER) return process.env.AI_PROVIDER.toLowerCase();
-  if (process.env.GROQ_API_KEY)   return 'groq';
+  // Preferimos Gemini sobre Groq porque tiene mejor manejo de outputs largos
+  // (el briefing nuevo apunta a 1.200-1.800 palabras) y cuotas más generosas.
   if (process.env.GEMINI_API_KEY) return 'gemini';
+  if (process.env.GROQ_API_KEY)   return 'groq';
   if (process.env.OPENAI_API_KEY) return 'openai';
   return 'gemini';
 }
