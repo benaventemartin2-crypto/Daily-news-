@@ -1,6 +1,5 @@
 import OpenAI from 'openai';
 
-// Providers con API compatible con OpenAI SDK.
 const PROVIDERS = {
   gemini: {
     baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
@@ -19,53 +18,92 @@ const PROVIDERS = {
   },
 };
 
-const SYSTEM_PROMPT = `Eres un editor ejecutivo que produce un briefing diario de noticias en español.
-Audiencia: profesional ocupado que NO quiere leer diarios completos.
-Reglas estrictas:
-- Solo hechos relevantes y verificables presentes en las noticias entregadas. No inventes.
-- Excluir farándula, deportes, crónica roja, opinión, regulación chilena.
-- Eliminar duplicados y agrupar noticias del mismo evento.
-- Tono: directo, neutral, sin adjetivación, sin clickbait.
-- Idioma: español neutro.
-- Largo final: 400-600 palabras totales.`;
+const SYSTEM_PROMPT = `Eres el editor de un briefing diario en español dirigido a un profesional ocupado en Chile.
+Tu trabajo es reemplazar la lectura matinal de Diario Financiero, Bloomberg y un par de portales internacionales.
 
-function buildUserPrompt(items, lang) {
-  const lines = items.map((it, idx) => {
-    const desc = (it.description || '').replace(/\s+/g, ' ').slice(0, 280);
-    return `${idx + 1}. [${it.region}] (${it.source}) ${it.title}${desc ? ` — ${desc}` : ''}`;
-  });
+Tono y estilo:
+- Claro, ejecutivo, inteligente. Mezcla entre Diario Financiero, Bloomberg y un explicador inteligente.
+- Párrafos bien escritos. Evita listas con bullets en las noticias principales.
+- Nada de relleno, ni frases tipo "Esto es importante porque...", "En resumen...", "Cabe destacar...", "En el contexto actual...".
+- No uses emojis dentro del texto. Sólo se permiten en los encabezados de sección si así te lo indica el formato.
+- No te presentes ni cierres con frases conversacionales. Esto es un producto editorial, no un chat.
 
-  return `Noticias prefiltradas de las últimas ~24h (${items.length} items):
+Reglas duras de contenido:
+- Solo hechos presentes en las noticias o indicadores entregados. NUNCA inventes datos, cifras, fechas, declaraciones ni resultados.
+- Si un dato no está disponible, dilo explícitamente ("dato no disponible", "no se reporta cifra"). Mejor decir que falta información que inventarla.
+- Excluye farándula, deportes, crónica roja y opinión.
+- Integra el contexto dentro del cuerpo de cada noticia. NO uses una sección separada de "por qué importa".
+- Conecta las noticias con temas recurrentes cuando sea natural (inflación, tasas, dólar, cobre, China, EE.UU., situación fiscal chilena, seguridad, IA).
+- Usa la memoria de días previos cuando aporte continuidad ("se suma a la semana marcada por...", "sigue la línea de ayer con...").
 
-${lines.join('\n')}
+Idioma: español neutro chileno.`;
 
-Genera un briefing siguiendo EXACTAMENTE este formato Markdown.
-Idioma: ${lang}.
+function buildNewsBlock(items) {
+  return items.map((it, idx) => {
+    const desc = (it.description || '').replace(/\s+/g, ' ').slice(0, 320);
+    const tags = it.tags?.length ? ` {${it.tags.join(',')}}` : '';
+    return `${idx + 1}. [${it.region}${tags}] (${it.source}) ${it.title}${desc ? ` — ${desc}` : ''}`;
+  }).join('\n');
+}
 
-🌍 INTERNACIONAL
-(máximo 5 noticias, prioriza geopolítica, economía global, tecnología, IA, startups, big tech, empresas grandes, mercados financieros)
-- **Título**
-  - Qué pasó: ...
-  - Por qué importa: ...
+function buildUserPrompt({ items, marketBlock, memoryBlock, dateLabel }) {
+  const memSection = memoryBlock
+    ? `\n\n--- MEMORIA DE DÍAS PREVIOS (úsala sólo si aporta continuidad real, no la cites textualmente) ---\n${memoryBlock}\n`
+    : '';
 
-🇨🇱 CHILE
-(máximo 5 noticias, solo economía chilena, negocios, empresas chilenas — NO regulación chilena)
-- **Título**
-  - Qué pasó: ...
-  - Por qué importa: ...
+  return `Fecha del briefing: ${dateLabel}.
 
-📊 ECONOMÍA Y MERCADOS
-(3-4 insights relevantes, en bullets cortos)
+--- INDICADORES DE MERCADO (datos reales recolectados de mindicador.cl y stooq.com) ---
+Usa SOLO estos números. No los modifiques. Si un indicador dice "no disponible", repítelo como tal.
+${marketBlock || '(sin datos de mercado disponibles hoy)'}
 
-🧠 INSIGHT DEL DÍA
-(una sola tendencia transversal y su implicancia, 2-3 frases)
+--- NOTICIAS PREFILTRADAS (últimas ~24-36h, ${items.length} items) ---
+${buildNewsBlock(items)}${memSection}
 
-🚀 OPORTUNIDAD / RIESGO
-- Oportunidad: una concreta, accionable.
-- Riesgo: uno relevante, accionable.
+--- INSTRUCCIONES DE FORMATO ---
+Genera el briefing en Markdown extendido. Usa EXACTAMENTE esta estructura, en este orden, sin secciones adicionales:
 
-Total: 400-600 palabras. No agregues introducción, conclusión, ni encabezados extra.
-Si una sección no tiene material suficiente en las noticias entregadas, ponla con menos items en lugar de inventar.`;
+# Briefing diario — ${dateLabel}
+
+## 1. Resumen ejecutivo
+Un párrafo único de 5 a 8 líneas. Apertura editorial, no lista. Debe responder, integrado en prosa: qué pasa hoy en el mundo, qué pasa en Chile, qué están mirando los mercados y qué tema conviene seguir durante el día. Tono de columna inteligente.
+
+## 2. Mundo
+Entre 3 y 5 noticias internacionales relevantes. Para cada una:
+### Título de la noticia
+Un párrafo de 6 a 10 líneas con el hecho, el contexto suficiente para entenderlo desde cero, y la conexión con economía, política o mercados cuando aplique. Cita la fuente entre paréntesis al final del párrafo, así: "(Reuters)" o "(BBC)". NO uses bullets dentro del párrafo.
+
+## 3. Chile
+Entre 3 y 5 noticias relevantes de Chile (política, economía, seguridad, regulación, empresas grandes o temas país). Mismo formato: título como ### encabezado, párrafo de 6 a 10 líneas con contexto integrado y fuente entre paréntesis al cierre.
+
+## 4. Economía y mercados
+Primero, el bloque de indicadores. RESPETA EXACTAMENTE este formato linea por linea, una línea por indicador, usando los valores de la sección de INDICADORES de arriba (incluye sólo los disponibles, omite los "no disponible" si quieres simplificar pero menciona explícitamente cuáles faltan):
+
+INDICATOR|<nombre>|<valor con unidad y variación>|<fecha>|<contexto en una línea>|<fuente>
+
+Ejemplo:
+INDICATOR|Dólar observado|945,30 CLP (+0,42%)|2026-05-09|Tipo de cambio del Banco Central|mindicador.cl
+
+Después del bloque INDICATOR, escribe 2 a 3 párrafos cortos interpretando lo que muestran los indicadores en conjunto y conectándolos con las noticias del día.
+
+## 5. Empresas y negocios
+Entre 3 y 5 noticias relevantes (bancos, retail, minería, energía, tecnología, startups, fusiones, resultados). Para cada una: ### título y párrafo de 6 a 10 líneas que explique qué pasó, qué significa, en qué contexto ocurre y qué puede indicar sobre el sector. Fuente entre paréntesis al cierre.
+
+## 6. Tecnología e innovación
+Entre 2 y 4 noticias (IA, software, chips, energía, autos eléctricos, ciberseguridad, big tech). Mismo formato: ### título y párrafo con contexto. Evita lanzamientos menores.
+
+## 7. Tema de fondo del día
+Elige UN tema importante del día y explícalo en profundidad. Extensión: 300 a 500 palabras. Debe servir para aprender y entender contexto acumulativo. Escribe como mini-columna explicativa, en prosa fluida, sin bullets. No empieces con "El tema de hoy es...". Empieza directo en el contenido.
+
+## 8. Qué mirar
+Entre 3 y 5 viñetas concretas para seguir durante el día o la semana. Aquí SÍ usa bullets cortos. Cada bullet es una señal accionable y específica (un dato que sale, una decisión, una votación, un resultado, un movimiento de mercado a vigilar). Nada genérico.
+
+--- REGLAS FINALES ---
+- Largo objetivo total: entre 1.200 y 1.800 palabras.
+- No agregues introducción, despedida ni meta-comentarios.
+- No incluyas la sección "Por qué esto es importante" ni "Oportunidades relevantes". Están eliminadas.
+- Si una sección no tiene material suficiente, redúcela en lugar de inventar.
+- Las únicas líneas que empiezan con "INDICATOR|" son las del bloque de indicadores en la sección 4. No uses esa sintaxis en otro lugar.`;
 }
 
 async function callWithRetry(fn, { retries = 3, baseDelayMs = 4000 } = {}) {
@@ -82,7 +120,15 @@ async function callWithRetry(fn, { retries = 3, baseDelayMs = 4000 } = {}) {
   }
 }
 
-export async function summarizeBriefing(items, { apiKey, model, provider = 'gemini', lang = 'es' }) {
+export async function summarizeBriefing(items, {
+  apiKey,
+  model,
+  provider = 'gemini',
+  lang = 'es',
+  marketBlock = '',
+  memoryBlock = '',
+  dateLabel = '',
+} = {}) {
   if (!items.length) return '_No se obtuvieron noticias en las últimas 24h._';
 
   const providerCfg = PROVIDERS[provider] ?? PROVIDERS.gemini;
@@ -94,18 +140,18 @@ export async function summarizeBriefing(items, { apiKey, model, provider = 'gemi
     );
   }
 
-  const clientOpts = { apiKey, maxRetries: 0, timeout: 30_000 };
+  const clientOpts = { apiKey, maxRetries: 0, timeout: 90_000 };
   if (providerCfg.baseURL) clientOpts.baseURL = providerCfg.baseURL;
   const client = new OpenAI(clientOpts);
 
-  const userPrompt = buildUserPrompt(items, lang);
-  console.log(`[summarize] Provider: ${provider} | Modelo: ${resolvedModel} | Items: ${items.length}`);
+  const userPrompt = buildUserPrompt({ items, marketBlock, memoryBlock, dateLabel });
+  console.log(`[summarize] Provider: ${provider} | Modelo: ${resolvedModel} | Items: ${items.length} | Mercado: ${marketBlock ? 'sí' : 'no'} | Memoria: ${memoryBlock ? 'sí' : 'no'}`);
   const t0 = Date.now();
 
   const response = await callWithRetry(() => client.chat.completions.create({
     model: resolvedModel,
-    temperature: 0.2,
-    max_tokens: 1500,
+    temperature: 0.35,
+    max_tokens: 6000,
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
       { role: 'user',   content: userPrompt },
@@ -114,6 +160,6 @@ export async function summarizeBriefing(items, { apiKey, model, provider = 'gemi
 
   const text = response.choices?.[0]?.message?.content?.trim() || '';
   const usage = response.usage || {};
-  console.log(`[summarize]   ok en ${Date.now() - t0}ms — tokens: prompt=${usage.prompt_tokens ?? '?'} comp=${usage.completion_tokens ?? '?'}`);
+  console.log(`[summarize]   ok en ${Date.now() - t0}ms — tokens: prompt=${usage.prompt_tokens ?? '?'} comp=${usage.completion_tokens ?? '?'} | palabras: ${text.split(/\s+/).length}`);
   return text;
 }
