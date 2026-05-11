@@ -110,16 +110,29 @@ Entre 3 y 5 viñetas concretas para seguir durante el día o la semana. Aquí S�
 - Las únicas líneas que empiezan con "INDICATOR|" son las del bloque de indicadores en la sección 4. No uses esa sintaxis en otro lugar.`;
 }
 
-async function callWithRetry(fn, { retries = 3, baseDelayMs = 4000 } = {}) {
-  for (let attempt = 0; attempt <= retries; attempt++) {
+async function callWithRetry(fn) {
+  // Estrategia agresiva: 429 (rate limit) suele ser cuota diaria o de minuto;
+  // hacemos solo 1 retry corto y luego saltamos al siguiente provider.
+  // 5xx sí amerita retry exponencial porque puede ser transitorio del servidor.
+  let attempt = 0;
+  while (true) {
     try {
       return await fn();
     } catch (err) {
-      const isRetryable = err?.status === 429 || err?.status >= 500;
-      if (!isRetryable || attempt === retries) throw err;
-      const delay = baseDelayMs * Math.pow(2, attempt);
-      console.warn(`[summarize] HTTP ${err.status} — retry en ${delay}ms (${attempt + 1}/${retries})`);
-      await new Promise((r) => setTimeout(r, delay));
+      const status = err?.status;
+      if (status === 429) {
+        if (attempt >= 1) throw err;
+        console.warn(`[summarize] HTTP 429 (rate limit) — 1 retry rápido y luego fallback al siguiente provider`);
+        await new Promise((r) => setTimeout(r, 3000));
+      } else if (status >= 500 && status < 600) {
+        if (attempt >= 2) throw err;
+        const delay = 2000 * Math.pow(2, attempt);
+        console.warn(`[summarize] HTTP ${status} — retry en ${delay}ms (${attempt + 1}/2)`);
+        await new Promise((r) => setTimeout(r, delay));
+      } else {
+        throw err;
+      }
+      attempt++;
     }
   }
 }
