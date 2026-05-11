@@ -1,8 +1,13 @@
 import 'dotenv/config';
 import { fetchNews } from './fetchNews.js';
 import { filterNews, pickTop } from './filterNews.js';
+import { fetchMarketData, renderMarketForPrompt } from './fetchMarketData.js';
 import { summarizeBriefing } from './summarizeBriefing.js';
 import { sendEmail } from './sendEmail.js';
+import {
+  loadMemory, saveMemory, appendDay,
+  extractTopicsFromPicked, renderMemoryForPrompt, extractDailySummary,
+} from './memory.js';
 
 function formatChileDate(tz = 'America/Santiago') {
   const fmt = new Intl.DateTimeFormat('es-CL', {
@@ -12,7 +17,13 @@ function formatChileDate(tz = 'America/Santiago') {
   return fmt.format(new Date());
 }
 
-// Resuelve qué API key usar según el provider configurado.
+function isoChileDate(tz = 'America/Santiago') {
+  const fmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+  });
+  return fmt.format(new Date());
+}
+
 function resolveApiKey(provider) {
   if (provider === 'gemini') return process.env.GEMINI_API_KEY;
   if (provider === 'groq')   return process.env.GROQ_API_KEY;
@@ -39,38 +50,62 @@ async function main() {
     gmailUser:  process.env.GMAIL_USER,
     gmailPass:  process.env.GMAIL_APP_PASSWORD,
     emailTo:    process.env.EMAIL_TO || '',
-    maxToModel: parseInt(process.env.MAX_NEWS_TO_MODEL || '40', 10),
+    maxToModel: parseInt(process.env.MAX_NEWS_TO_MODEL || '60', 10),
     lang:       process.env.BRIEFING_LANG || 'es',
     tz:         process.env.TIMEZONE || 'America/Santiago',
     dryRun:     String(process.env.DRY_RUN || '').toLowerCase() === 'true',
+    skipMarket: String(process.env.SKIP_MARKET || '').toLowerCase() === 'true',
+    skipMemory: String(process.env.SKIP_MEMORY || '').toLowerCase() === 'true',
   };
+
+  const dateLabel = formatChileDate(cfg.tz);
+  const isoDate = isoChileDate(cfg.tz);
 
   console.log('==============================================');
   console.log(' Daily News Briefing');
-  console.log(` Provider: ${cfg.provider} | DryRun: ${cfg.dryRun}`);
+  console.log(` Provider: ${cfg.provider} | DryRun: ${cfg.dryRun} | Fecha: ${dateLabel}`);
   console.log('==============================================');
 
-  // 1) Recolectar
-  const raw = await fetchNews({ newsApiKey: cfg.newsApiKey });
+  // 1) Recolectar noticias e indicadores en paralelo
+  const [raw, marketData, memory] = await Promise.all([
+    fetchNews({ newsApiKey: cfg.newsApiKey }),
+    cfg.skipMarket ? Promise.resolve(null) : fetchMarketData(),
+    cfg.skipMemory ? Promise.resolve({ history: [] }) : loadMemory(),
+  ]);
 
-  // 2) Filtrar determinísticamente
+  // 2) Filtrar y seleccionar
   const filtered = filterNews(raw);
   const picked = pickTop(filtered, { maxToModel: cfg.maxToModel });
 
-  // 3) Resumir con IA
+  // 3) Renderizar contexto para el modelo
+  const marketBlock = marketData ? renderMarketForPrompt(marketData) : '';
+  const memoryBlock = renderMemoryForPrompt(memory);
+
+  // 4) Generar briefing
   const briefing = await summarizeBriefing(picked, {
     apiKey:   cfg.aiKey,
     model:    cfg.aiModel,
     provider: cfg.provider,
     lang:     cfg.lang,
+    marketBlock,
+    memoryBlock,
+    dateLabel,
   });
 
   console.log('\n----- BRIEFING -----\n');
   console.log(briefing);
   console.log('\n--------------------\n');
 
-  // 4) Enviar mail
-  const subject = `Briefing diario — Noticias clave — ${formatChileDate(cfg.tz)}`;
+  // 5) Persistir memoria (lo intentamos siempre que el briefing tenga contenido)
+  if (!cfg.skipMemory && briefing && briefing.length > 200) {
+    const headlines = extractTopicsFromPicked(picked);
+    const summary = extractDailySummary(briefing);
+    const updated = appendDay(memory, { date: isoDate, headlines, summary });
+    await saveMemory(updated);
+  }
+
+  // 6) Enviar mail
+  const subject = `Briefing diario — ${dateLabel}`;
 
   if (cfg.dryRun) {
     console.log(`[main] DRY_RUN=true — no se envía mail. Asunto sería: "${subject}"`);
@@ -81,6 +116,7 @@ async function main() {
       to:          cfg.emailTo,
       subject,
       markdown:    briefing,
+      dateLabel,
     });
   }
 
