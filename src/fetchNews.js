@@ -1,26 +1,29 @@
 import Parser from 'rss-parser';
 
 const parser = new Parser({
-  timeout: 15000,
-  headers: { 'User-Agent': 'daily-news-briefing/2.0 (+github actions)' },
+  timeout: 8000,
+  headers: { 'User-Agent': 'Mozilla/5.0 (compatible; daily-news-briefing/2.0; +github-actions)' },
 });
 
 const RSS_SOURCES = [
   // ===== Internacional - mundo / geopolítica =====
-  { name: 'Reuters World',           url: 'https://www.reutersagency.com/feed/?best-topics=world&post_type=best',         region: 'INT', tags: ['world'] },
+  // Reuters reutersagency.com está deprecado (404). Usamos Google News con
+  // filtro de sitio, que es estable y agrega los titulares oficiales.
+  { name: 'Reuters World (GN)',      url: 'https://news.google.com/rss/search?q=site:reuters.com+world&hl=en-US&gl=US&ceid=US:en', region: 'INT', tags: ['world'] },
   { name: 'BBC World',               url: 'https://feeds.bbci.co.uk/news/world/rss.xml',                                   region: 'INT', tags: ['world'] },
   { name: 'NYT World',               url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml',                        region: 'INT', tags: ['world'] },
   { name: 'Al Jazeera',              url: 'https://www.aljazeera.com/xml/rss/all.xml',                                     region: 'INT', tags: ['world'] },
   { name: 'The Guardian World',      url: 'https://www.theguardian.com/world/rss',                                         region: 'INT', tags: ['world'] },
 
   // ===== Internacional - economía / mercados / negocios =====
-  { name: 'Reuters Business',        url: 'https://www.reutersagency.com/feed/?best-topics=business-finance&post_type=best', region: 'INT', tags: ['business', 'markets'] },
+  { name: 'Reuters Business (GN)',   url: 'https://news.google.com/rss/search?q=site:reuters.com+business&hl=en-US&gl=US&ceid=US:en', region: 'INT', tags: ['business', 'markets'] },
   { name: 'BBC Business',            url: 'https://feeds.bbci.co.uk/news/business/rss.xml',                                region: 'INT', tags: ['business'] },
   { name: 'NYT Business',            url: 'https://rss.nytimes.com/services/xml/rss/nyt/Business.xml',                     region: 'INT', tags: ['business'] },
   { name: 'CNBC Top News',           url: 'https://www.cnbc.com/id/100003114/device/rss/rss.html',                         region: 'INT', tags: ['markets', 'business'] },
   { name: 'CNBC Markets',            url: 'https://www.cnbc.com/id/15839069/device/rss/rss.html',                          region: 'INT', tags: ['markets'] },
   { name: 'FT Front Page',           url: 'https://www.ft.com/?format=rss',                                                region: 'INT', tags: ['markets', 'business'] },
   { name: 'WSJ Markets',             url: 'https://feeds.a.dj.com/rss/RSSMarketsMain.xml',                                 region: 'INT', tags: ['markets'] },
+  { name: 'Bloomberg (GN)',          url: 'https://news.google.com/rss/search?q=site:bloomberg.com+markets&hl=en-US&gl=US&ceid=US:en', region: 'INT', tags: ['markets', 'business'] },
 
   // ===== Tecnología / IA / startups / big tech =====
   { name: 'TechCrunch',              url: 'https://techcrunch.com/feed/',                                                  region: 'INT', tags: ['tech'] },
@@ -31,17 +34,20 @@ const RSS_SOURCES = [
   { name: 'Wired',                   url: 'https://www.wired.com/feed/rss',                                                region: 'INT', tags: ['tech'] },
 
   // ===== Chile - economía / mercados / negocios =====
-  { name: 'Diario Financiero',       url: 'https://www.df.cl/rss',                                                         region: 'CL', tags: ['business', 'markets'] },
+  // df.cl/rss y elmostrador/mercados/feed devuelven 404. Usamos Google News
+  // como espejo de los titulares con filtro por sitio.
+  { name: 'Diario Financiero (GN)',  url: 'https://news.google.com/rss/search?q=site:df.cl&hl=es-419&gl=CL&ceid=CL:es-419', region: 'CL', tags: ['business', 'markets'] },
   { name: 'La Tercera Pulso',        url: 'https://www.latercera.com/arc/outboundfeeds/rss/category/pulso/?outputType=xml', region: 'CL', tags: ['business'] },
-  { name: 'El Mostrador Mercados',   url: 'https://www.elmostrador.cl/mercados/feed/',                                     region: 'CL', tags: ['business', 'markets'] },
-  { name: 'BioBio Economía',         url: 'https://www.biobiochile.cl/lista/categorias/economia/feed',                     region: 'CL', tags: ['business'] },
+  { name: 'El Mostrador (GN)',       url: 'https://news.google.com/rss/search?q=site:elmostrador.cl+mercados+OR+econom%C3%ADa&hl=es-419&gl=CL&ceid=CL:es-419', region: 'CL', tags: ['business', 'markets'] },
+  { name: 'BioBio Economía (GN)',    url: 'https://news.google.com/rss/search?q=site:biobiochile.cl+econom%C3%ADa&hl=es-419&gl=CL&ceid=CL:es-419', region: 'CL', tags: ['business'] },
   { name: 'Emol Economía',           url: 'https://www.emol.com/sitios/rss/noticias.asp?canal=economia',                   region: 'CL', tags: ['business'] },
   { name: 'Ex-Ante',                 url: 'https://www.ex-ante.cl/feed/',                                                  region: 'CL', tags: ['country'] },
 
   // ===== Chile - país / política / regulación =====
   { name: 'La Tercera Política',     url: 'https://www.latercera.com/arc/outboundfeeds/rss/category/politica/?outputType=xml', region: 'CL', tags: ['country'] },
   { name: 'Emol Nacional',           url: 'https://www.emol.com/sitios/rss/noticias.asp?canal=nacional',                   region: 'CL', tags: ['country'] },
-  { name: 'BioBio Nacional',         url: 'https://www.biobiochile.cl/lista/categorias/nacional/feed',                     region: 'CL', tags: ['country'] },
+  { name: 'BioBio Nacional (GN)',    url: 'https://news.google.com/rss/search?q=site:biobiochile.cl+nacional&hl=es-419&gl=CL&ceid=CL:es-419', region: 'CL', tags: ['country'] },
+  { name: 'Chile (GN topstories)',   url: 'https://news.google.com/rss?hl=es-419&gl=CL&ceid=CL:es-419',                    region: 'CL', tags: ['country'] },
 ];
 
 async function fetchFromRss(source) {
