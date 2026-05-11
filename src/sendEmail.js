@@ -115,19 +115,19 @@ function markdownToHtml(md) {
     // Encabezados
     if (/^#\s+/.test(trimmed)) {
       flushUl();
-      out.push(`<h1 style="font-size:22px; line-height:1.25; margin:0 0 8px 0; color:#0a0a0a; letter-spacing:-0.01em;">${renderInline(trimmed.replace(/^#\s+/, ''))}</h1>`);
+      out.push(`<h1 class="briefing-h1" style="font-size:22px; line-height:1.25; margin:0 0 8px 0; color:#0a0a0a; letter-spacing:-0.01em;">${renderInline(trimmed.replace(/^#\s+/, ''))}</h1>`);
       continue;
     }
     if (/^##\s+/.test(trimmed)) {
       flushUl();
       const text = trimmed.replace(/^##\s+/, '');
-      out.push(`<h2 style="font-size:17px; line-height:1.3; margin:28px 0 10px 0; padding-bottom:6px; border-bottom:2px solid #0a0a0a; color:#0a0a0a;">${renderInline(text)}</h2>`);
+      out.push(`<h2 class="briefing-h2" style="font-size:17px; line-height:1.3; margin:28px 0 10px 0; padding-bottom:6px; border-bottom:2px solid #0a0a0a; color:#0a0a0a;">${renderInline(text)}</h2>`);
       continue;
     }
     if (/^###\s+/.test(trimmed)) {
       flushUl();
       const text = trimmed.replace(/^###\s+/, '');
-      out.push(`<h3 style="font-size:15px; line-height:1.35; margin:18px 0 6px 0; color:#1a1a1a; font-weight:700;">${renderInline(text)}</h3>`);
+      out.push(`<h3 class="briefing-h3" style="font-size:15px; line-height:1.35; margin:18px 0 6px 0; color:#1a1a1a; font-weight:700;">${renderInline(text)}</h3>`);
       continue;
     }
 
@@ -156,19 +156,43 @@ function buildHtml({ markdown, dateLabel }) {
   const body = markdownToHtml(markdown);
   const { words, min } = readingTime(markdown);
 
+  // Outlook desktop (motor Word) ignora max-width, border-radius, box-shadow y
+  // @media queries. Para que igual se vea decente usamos conditional comments
+  // MSO con una tabla de ancho fijo. El resto de clientes lo ignora.
   return `<!doctype html>
-<html lang="es">
+<html lang="es" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="x-apple-disable-message-reformatting" />
+<meta name="color-scheme" content="light" />
+<meta name="supported-color-schemes" content="light" />
 <title>Briefing diario — ${escapeHtml(dateLabel)}</title>
+<!--[if mso]>
+<style type="text/css">
+  table, td, div, p, h1, h2, h3, ul, li { font-family: 'Segoe UI', Arial, sans-serif !important; }
+  h2 { mso-line-height-rule: exactly; }
+</style>
+<xml>
+  <o:OfficeDocumentSettings>
+    <o:AllowPNG/>
+    <o:PixelsPerInch>96</o:PixelsPerInch>
+  </o:OfficeDocumentSettings>
+</xml>
+<![endif]-->
 <style>
+  /* Modo móvil: sólo lo usan clientes web/iOS/Android. Outlook desktop lo ignora. */
   @media (max-width: 600px) {
     .container { padding: 16px !important; }
-    h1 { font-size: 20px !important; }
-    h2 { font-size: 16px !important; }
-    h3 { font-size: 14px !important; }
+    .briefing-h1 { font-size: 20px !important; }
+    .briefing-h2 { font-size: 16px !important; }
+    .briefing-h3 { font-size: 14px !important; }
     table { font-size: 13px !important; }
+  }
+  /* Modo oscuro: forzamos colores legibles para que Outlook/iOS no inviertan. */
+  @media (prefers-color-scheme: dark) {
+    body, .card { background:#ffffff !important; color:#1f1f1f !important; }
   }
 </style>
 </head>
@@ -176,7 +200,11 @@ function buildHtml({ markdown, dateLabel }) {
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f4f5f7;">
     <tr>
       <td align="center" style="padding:24px 12px;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:680px; background:#ffffff; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+        <!--[if mso]>
+        <table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" width="680" style="width:680px;">
+          <tr><td>
+        <![endif]-->
+        <table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" width="680" class="card" style="width:100%; max-width:680px; background:#ffffff; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
           <tr>
             <td class="container" style="padding:28px 32px;">
               <div style="font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:#888; margin-bottom:6px;">Briefing editorial</div>
@@ -191,6 +219,10 @@ function buildHtml({ markdown, dateLabel }) {
             </td>
           </tr>
         </table>
+        <!--[if mso]>
+          </td></tr>
+        </table>
+        <![endif]-->
       </td>
     </tr>
   </table>
