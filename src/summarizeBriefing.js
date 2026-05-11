@@ -124,6 +124,64 @@ async function callWithRetry(fn, { retries = 3, baseDelayMs = 4000 } = {}) {
   }
 }
 
+// Tope de items enviados al modelo, por provider.
+// Groq free tier topa en 12.000 TPM TOTAL (prompt + completion), así que
+// recortamos fuerte el input para que quepa.
+const ITEM_CAP_BY_PROVIDER = { gemini: 60, groq: 22, openai: 60 };
+
+// Intenta generar el briefing con un provider específico.
+async function tryOneProvider({ provider, apiKey, model, items, marketBlock, memoryBlock, dateLabel }) {
+  const providerCfg = PROVIDERS[provider] ?? PROVIDERS.gemini;
+  const resolvedModel = model || providerCfg.defaultModel;
+
+  if (!apiKey) {
+    throw new Error(`Falta la API key para el provider "${provider}" (env ${providerCfg.envKey}).`);
+  }
+
+  const itemCap = ITEM_CAP_BY_PROVIDER[provider] ?? 40;
+  const trimmedItems = items.slice(0, itemCap);
+  const userPrompt = buildUserPrompt({ items: trimmedItems, marketBlock, memoryBlock, dateLabel });
+
+  const clientOpts = { apiKey, maxRetries: 0, timeout: 120_000 };
+  if (providerCfg.baseURL) clientOpts.baseURL = providerCfg.baseURL;
+  const client = new OpenAI(clientOpts);
+
+  // max_tokens por provider:
+  //   - Gemini: hasta 8192 en flash. Damos 8000.
+  //   - Groq free tier topa 12K TPM total. Damos 4000 de output.
+  //   - OpenAI gpt-4o-mini: 16K. Damos 4000.
+  const maxTokensByProvider = { gemini: 8000, groq: 4000, openai: 4000 };
+  const maxTokens = maxTokensByProvider[provider] ?? 4000;
+
+  const promptTokensEst = Math.round(userPrompt.length / 4);
+  console.log(`[summarize] Provider: ${provider} | Modelo: ${resolvedModel} | items=${trimmedItems.length}/${items.length} | prompt~${promptTokensEst}t | max_out=${maxTokens}`);
+  const t0 = Date.now();
+
+  const response = await callWithRetry(() => client.chat.completions.create({
+    model: resolvedModel,
+    temperature: 0.35,
+    max_tokens: maxTokens,
+    messages: [
+      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'user',   content: userPrompt },
+    ],
+  }));
+
+  const text = response.choices?.[0]?.message?.content?.trim() || '';
+  const finishReason = response.choices?.[0]?.finish_reason || 'unknown';
+  const usage = response.usage || {};
+
+  console.log(`[summarize]   ${provider} ok en ${Date.now() - t0}ms — prompt=${usage.prompt_tokens ?? '?'} comp=${usage.completion_tokens ?? '?'} palabras=${text ? text.split(/\s+/).length : 0}`);
+  return { text, finishReason, usage, resolvedModel };
+}
+
+// Orden de fallback: si el primario falla, intenta los demás siempre que
+// tengan API key disponible.
+function buildFallbackChain(primary) {
+  const all = ['gemini', 'groq', 'openai'];
+  return [primary, ...all.filter((p) => p !== primary)];
+}
+
 export async function summarizeBriefing(items, {
   apiKey,
   model,
@@ -135,57 +193,40 @@ export async function summarizeBriefing(items, {
 } = {}) {
   if (!items.length) return '_No se obtuvieron noticias en las últimas 24h._';
 
-  const providerCfg = PROVIDERS[provider] ?? PROVIDERS.gemini;
-  const resolvedModel = model || providerCfg.defaultModel;
+  console.log(`[summarize] items=${items.length} | mercado=${marketBlock ? 'sí' : 'no'} | memoria=${memoryBlock ? 'sí' : 'no'}`);
 
-  if (!apiKey) {
-    throw new Error(
-      `Falta la API key para el provider "${provider}". Configura el secret ${providerCfg.envKey}.`
-    );
+  const keysByProvider = {
+    gemini: process.env.GEMINI_API_KEY,
+    groq:   process.env.GROQ_API_KEY,
+    openai: process.env.OPENAI_API_KEY,
+  };
+  if (apiKey) keysByProvider[provider] = apiKey;
+
+  const chain = buildFallbackChain(provider).filter((p) => keysByProvider[p]);
+  if (!chain.length) throw new Error('No hay ninguna API key disponible para los providers conocidos.');
+
+  let lastErr = null;
+  for (const p of chain) {
+    const isPrimary = p === chain[0];
+    try {
+      const { text, finishReason, usage, resolvedModel } = await tryOneProvider({
+        provider: p,
+        apiKey: keysByProvider[p],
+        model: isPrimary ? model : '',
+        items, marketBlock, memoryBlock, dateLabel,
+      });
+      if (!text) {
+        console.error(`[summarize] ${p} devolvió respuesta vacía. finish_reason=${finishReason} usage=${JSON.stringify(usage)}`);
+        throw new Error(`Modelo ${resolvedModel} devolvió respuesta vacía (finish_reason=${finishReason}).`);
+      }
+      if (!isPrimary) console.warn(`[summarize] Fallback exitoso a ${p} tras fallo del primario.`);
+      return text;
+    } catch (err) {
+      lastErr = err;
+      console.error(`[summarize] Falló ${p}: status=${err?.status} ${err?.message?.slice(0, 200)}`);
+      if (err?.error) console.error('[summarize]   detalle:', JSON.stringify(err.error).slice(0, 300));
+      // Continuamos con el siguiente provider de la cadena.
+    }
   }
-
-  const clientOpts = { apiKey, maxRetries: 0, timeout: 120_000 };
-  if (providerCfg.baseURL) clientOpts.baseURL = providerCfg.baseURL;
-  const client = new OpenAI(clientOpts);
-
-  const userPrompt = buildUserPrompt({ items, marketBlock, memoryBlock, dateLabel });
-
-  // max_tokens por provider:
-  //   - Gemini: hasta 8192 en flash. Damos 8000 para que quepa el briefing largo + thinking.
-  //   - Groq (llama-3.3-70b-versatile): topa en 8000-8192 según versión. Damos 7000.
-  //   - OpenAI gpt-4o-mini: 16K. Damos 4000 (más que suficiente para 1800 palabras).
-  const maxTokensByProvider = { gemini: 8000, groq: 7000, openai: 4000 };
-  const maxTokens = maxTokensByProvider[provider] ?? 4000;
-
-  console.log(`[summarize] Provider: ${provider} | Modelo: ${resolvedModel} | Items: ${items.length} | max_tokens: ${maxTokens} | Mercado: ${marketBlock ? 'sí' : 'no'} | Memoria: ${memoryBlock ? 'sí' : 'no'}`);
-  const t0 = Date.now();
-
-  let response;
-  try {
-    response = await callWithRetry(() => client.chat.completions.create({
-      model: resolvedModel,
-      temperature: 0.35,
-      max_tokens: maxTokens,
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user',   content: userPrompt },
-      ],
-    }));
-  } catch (err) {
-    console.error(`[summarize] ERROR provider=${provider} modelo=${resolvedModel} status=${err?.status} mensaje="${err?.message}"`);
-    if (err?.error) console.error('[summarize] detalle:', JSON.stringify(err.error).slice(0, 500));
-    throw err;
-  }
-
-  const text = response.choices?.[0]?.message?.content?.trim() || '';
-  const finishReason = response.choices?.[0]?.finish_reason || 'unknown';
-  const usage = response.usage || {};
-
-  if (!text) {
-    console.error(`[summarize] Respuesta vacía. finish_reason=${finishReason} usage=${JSON.stringify(usage)}`);
-    throw new Error(`El modelo ${resolvedModel} devolvió respuesta vacía (finish_reason=${finishReason}). Probable causa: max_tokens insuficiente o filtro de safety. Considera cambiar AI_MODEL o reducir MAX_NEWS_TO_MODEL.`);
-  }
-
-  console.log(`[summarize]   ok en ${Date.now() - t0}ms — tokens: prompt=${usage.prompt_tokens ?? '?'} comp=${usage.completion_tokens ?? '?'} | palabras: ${text.split(/\s+/).length}`);
-  return text;
+  throw lastErr ?? new Error('Todos los providers fallaron sin error específico.');
 }

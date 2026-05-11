@@ -121,29 +121,33 @@ async function buildChileIndicators(snapshot) {
 // (no requiere key pero tiene rate limits).
 
 async function fetchStooqQuote(symbol) {
-  // Endpoint CSV con OHLCV: la última fila trae fecha y close.
-  // h&e=csv -> incluir headers
+  // Endpoint CSV. Pedimos: symbol, date, time, open, high, low, close.
+  // El orden de columnas SIEMPRE coincide con el parámetro f=, así que parseamos
+  // por posición fija. No usamos el header porque Stooq a veces devuelve
+  // títulos distintos según el mercado / día sin datos.
   const url = `https://stooq.com/q/l/?s=${encodeURIComponent(symbol)}&f=sd2t2ohlc&h&e=csv`;
   try {
     const res = await fetchWithTimeout(url, STOOQ_TIMEOUT_MS);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const text = await res.text();
-    const lines = text.trim().split('\n');
-    if (lines.length < 2) throw new Error('respuesta vacía');
-    const header = lines[0].toLowerCase().split(',');
-    const row = lines[1].split(',');
-    const get = (k) => {
-      const i = header.indexOf(k);
-      return i >= 0 ? row[i] : null;
-    };
-    const close = parseFloat(get('close'));
-    const open = parseFloat(get('open'));
-    const date = get('date');
-    if (!Number.isFinite(close)) throw new Error(`close inválido: ${get('close')}`);
+    const lines = text.trim().split('\n').filter((l) => l.trim());
+    if (lines.length < 2) throw new Error('respuesta sin datos');
+
+    // Saltamos la primera línea (header). Tomamos la segunda.
+    const row = lines[1].split(',').map((c) => c.trim());
+
+    // Orden fijo según f=sd2t2ohlc: [symbol, date, time, open, high, low, close]
+    const date = row[1];
+    const open = parseFloat(row[3]);
+    const close = parseFloat(row[6]);
+
+    // Stooq devuelve "N/D" en valores cuando no hay datos (mercado cerrado, fin de semana).
+    if (!Number.isFinite(close)) throw new Error(`sin datos para ${symbol} (close="${row[6]}")`);
+
     return {
       close,
       open: Number.isFinite(open) ? open : null,
-      date: date || null,
+      date: date && date !== 'N/D' ? date : null,
     };
   } catch (err) {
     console.warn(`  [warn] Stooq ${symbol} falló: ${err.message}`);
