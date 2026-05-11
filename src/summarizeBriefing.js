@@ -2,8 +2,12 @@ import OpenAI from 'openai';
 
 const PROVIDERS = {
   gemini: {
+    // Usamos gemini-2.0-flash como default: rápido, output limpio, sin "thinking
+    // mode" que en 2.5-flash puede dejar el campo content vacío al consumir
+    // todos los tokens en thinking interno. Para forzar 2.5-flash o pro, setear
+    // la variable AI_MODEL.
     baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
-    defaultModel: 'gemini-2.5-flash',
+    defaultModel: 'gemini-2.0-flash',
     envKey: 'GEMINI_API_KEY',
   },
   groq: {
@@ -140,26 +144,48 @@ export async function summarizeBriefing(items, {
     );
   }
 
-  const clientOpts = { apiKey, maxRetries: 0, timeout: 90_000 };
+  const clientOpts = { apiKey, maxRetries: 0, timeout: 120_000 };
   if (providerCfg.baseURL) clientOpts.baseURL = providerCfg.baseURL;
   const client = new OpenAI(clientOpts);
 
   const userPrompt = buildUserPrompt({ items, marketBlock, memoryBlock, dateLabel });
-  console.log(`[summarize] Provider: ${provider} | Modelo: ${resolvedModel} | Items: ${items.length} | Mercado: ${marketBlock ? 'sí' : 'no'} | Memoria: ${memoryBlock ? 'sí' : 'no'}`);
+
+  // max_tokens por provider:
+  //   - Gemini: hasta 8192 en flash. Damos 8000 para que quepa el briefing largo + thinking.
+  //   - Groq (llama-3.3-70b-versatile): topa en 8000-8192 según versión. Damos 7000.
+  //   - OpenAI gpt-4o-mini: 16K. Damos 4000 (más que suficiente para 1800 palabras).
+  const maxTokensByProvider = { gemini: 8000, groq: 7000, openai: 4000 };
+  const maxTokens = maxTokensByProvider[provider] ?? 4000;
+
+  console.log(`[summarize] Provider: ${provider} | Modelo: ${resolvedModel} | Items: ${items.length} | max_tokens: ${maxTokens} | Mercado: ${marketBlock ? 'sí' : 'no'} | Memoria: ${memoryBlock ? 'sí' : 'no'}`);
   const t0 = Date.now();
 
-  const response = await callWithRetry(() => client.chat.completions.create({
-    model: resolvedModel,
-    temperature: 0.35,
-    max_tokens: 6000,
-    messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user',   content: userPrompt },
-    ],
-  }));
+  let response;
+  try {
+    response = await callWithRetry(() => client.chat.completions.create({
+      model: resolvedModel,
+      temperature: 0.35,
+      max_tokens: maxTokens,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user',   content: userPrompt },
+      ],
+    }));
+  } catch (err) {
+    console.error(`[summarize] ERROR provider=${provider} modelo=${resolvedModel} status=${err?.status} mensaje="${err?.message}"`);
+    if (err?.error) console.error('[summarize] detalle:', JSON.stringify(err.error).slice(0, 500));
+    throw err;
+  }
 
   const text = response.choices?.[0]?.message?.content?.trim() || '';
+  const finishReason = response.choices?.[0]?.finish_reason || 'unknown';
   const usage = response.usage || {};
+
+  if (!text) {
+    console.error(`[summarize] Respuesta vacía. finish_reason=${finishReason} usage=${JSON.stringify(usage)}`);
+    throw new Error(`El modelo ${resolvedModel} devolvió respuesta vacía (finish_reason=${finishReason}). Probable causa: max_tokens insuficiente o filtro de safety. Considera cambiar AI_MODEL o reducir MAX_NEWS_TO_MODEL.`);
+  }
+
   console.log(`[summarize]   ok en ${Date.now() - t0}ms — tokens: prompt=${usage.prompt_tokens ?? '?'} comp=${usage.completion_tokens ?? '?'} | palabras: ${text.split(/\s+/).length}`);
   return text;
 }

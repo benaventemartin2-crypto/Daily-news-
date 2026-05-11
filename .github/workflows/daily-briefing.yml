@@ -81,6 +81,9 @@ jobs:
 
       - name: Persistir memoria editorial
         if: steps.timecheck.outputs.skip != 'true' || github.event_name == 'workflow_dispatch'
+        # No queremos que un fallo de push (branch protegido, conflicto, etc.)
+        # marque el workflow como rojo: el mail ya se envió.
+        continue-on-error: true
         run: |
           if [ -f data/memory.json ]; then
             git config user.name  "github-actions[bot]"

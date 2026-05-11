@@ -184,15 +184,24 @@ async function buildIpsa() {
 
 // --- Orquestador público --------------------------------------------
 
-export async function fetchMarketData() {
-  console.log('[market] Recolectando indicadores económicos...');
+async function fetchMarketDataInternal() {
   const t0 = Date.now();
 
-  const [snapshot, ipsa, ...intlEntries] = await Promise.all([
+  // Promise.allSettled para que un fallo aislado no rompa todo.
+  const settled = await Promise.allSettled([
     fetchMindicadorAll(),
     buildIpsa(),
     ...STOOQ_TICKERS.map(buildIntlIndicator),
   ]);
+  const snapshot = settled[0].status === 'fulfilled' ? settled[0].value : null;
+  const ipsa = settled[1].status === 'fulfilled'
+    ? settled[1].value
+    : unavailable('IPSA', 'pts', 'Índice principal de la Bolsa de Santiago', 'error de red');
+  const intlEntries = settled.slice(2).map((r, idx) => {
+    if (r.status === 'fulfilled') return r.value;
+    const t = STOOQ_TICKERS[idx];
+    return [t.key, unavailable(t.label, t.unit, t.context, 'error de red')];
+  });
 
   const cl = snapshot
     ? await buildChileIndicators(snapshot)
@@ -229,6 +238,18 @@ export async function fetchMarketData() {
   const ok = Object.values(indicators).filter((x) => x.value != null).length;
   console.log(`[market]   ${ok}/${Object.keys(indicators).length} indicadores con dato — ${Date.now() - t0}ms`);
   return indicators;
+}
+
+// Wrapper que garantiza que esta función NUNCA tire excepción.
+// Si todo falla, devolvemos null y el briefing se genera sin tabla de indicadores.
+export async function fetchMarketData() {
+  console.log('[market] Recolectando indicadores económicos...');
+  try {
+    return await fetchMarketDataInternal();
+  } catch (err) {
+    console.warn(`[market] Falla global en recolección de indicadores: ${err.message}. Continuamos sin tabla de mercado.`);
+    return null;
+  }
 }
 
 // Render Markdown legible para el mail (lo consume el render HTML).
