@@ -1,6 +1,24 @@
 {
   "history": [
     {
+      "date": "2026-06-07",
+      "headlines": [
+        "Focus: Chinese investors behind Indonesia's nickel boom scout alternatives as policy changes bite - Reuters",
+        "Hegseth attacks Europe over migration with beach 'invasion' D-Day speech",
+        "Huge crowds throng Madrid streets for Pope's open-air mass",
+        "Gunman Kills at Least One in Attack on Central Israel",
+        "More than a million people join Pope Leo for outdoor Mass in Madrid",
+        "BA boss warns costly aviation taxes and rail tickets are stunting UK growth",
+        "An Eid celebration on a Gaza rooftop turns into a ‘horror movie’",
+        "‘A driver of political violence’: how the breakneck AI boom is fueling anti-tech extremism",
+        "Voters sour on Trump’s handling of inflation and grocery prices — FT poll",
+        "‘It’s time to move forward’: Armenians vote in election closely watched by Russia and EU",
+        "Kosovo votes again amid political deadlock, seeking EU and NATO progress",
+        "How have countries around the world responded to the US-Israel war on Iran?"
+      ],
+      "summary": "El mundo sigue de cerca la evolución de la situación en Oriente Medio, donde las tensiones entre Irán y Estados Unidos siguen aumentando. En el frente internacional, se reportan ataques con drones y un brote de ébola en la República Democrática del Congo. En Chile, el desempleo sigue siendo un tema importante, mientras"
+    },
+    {
       "date": "2026-06-06",
       "headlines": [
         "Scores of Ukrainian drones target St Petersburg in attack Russia calls 'unprecedented'",
@@ -105,24 +123,6 @@
         "Israel kills three in attacks on Lebanon, issues more displacement orders",
         "Pope Leo Warns of Risks From A.I. in 42,300-Word Encyclical",
         "U.S.-Iran Peace Deal Nearer, But Could Take Days to Nail Down, U.S. Official Says"
-      ],
-      "summary": "El mundo sigue de cerca la evolución de la situación en Oriente Medio, donde las tensiones entre Irán y Estados Unidos siguen aumentando. El presidente de Estados Unidos, Donald Trump, ha anunciado que se ha alcanzado un acuerdo de paz con Irán, aunque los detalles del acuerdo aún no han sido revelados. En Chile, el go"
-    },
-    {
-      "date": "2026-05-24",
-      "headlines": [
-        "Large-scale Russian attack on Ukraine leaves four dead and dozens injured",
-        "Here’s the latest.",
-        "How a Curious FIFA Deal Gave Fox a Huge Bargain for World Cup Broadcast Rights",
-        "Middle East crisis live: Rubio sees initial progress on reopening Hormuz after Trump claims Iran deal ‘largely negotiated’",
-        "What is included in Iran ceasefire deal?",
-        "Iran war day 86: Trump announces potential deal amid ‘cloud of mistrust’",
-        "Marco Rubio says ‘significant progress’ made in US-Iran talks to end war",
-        "UK supply chain unprepared for major shocks such as war, report warns",
-        "Silva y Ergas: la visión tras las apuestas de Kast en medio de la guerra comercial",
-        "What to Know About the Potential U.S.-Iran Peace Deal",
-        "Trump Says Peace Deal Is Near",
-        "Irish gangland figure fails in Dublin byelection bid for seat in parliament"
       ],
       "summary": "El mundo sigue de cerca la evolución de la situación en Oriente Medio, donde las tensiones entre Irán y Estados Unidos siguen aumentando. El presidente de Estados Unidos, Donald Trump, ha anunciado que se ha alcanzado un acuerdo de paz con Irán, aunque los detalles del acuerdo aún no han sido revelados. En Chile, el go"
     }
