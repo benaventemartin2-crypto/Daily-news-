@@ -1,6 +1,24 @@
 {
   "history": [
     {
+      "date": "2026-07-01",
+      "headlines": [
+        "Starmer to take PMQs as he faces backlash over ‘poisoned chalice’ defence investment plan – UK politics live",
+        "Ireland set to take presidency of EU in Dublin opening ceremony – Europe live",
+        "White House rejects conflict-of-interests concerns as Trump’s crypto earnings soar – US politics live",
+        "Oil prices wobble as breakdown in U.S.-Iran talks casts doubt over peace process",
+        "Australia news live: politicians and media gather for Canberra’s Midwinter Ball; Westpac director resigns as KPMG scandal widens",
+        "Trump's annual financial disclosure shows more than $580M in crypto-related income",
+        "Three people die in Mexico World Cup celebrations as fans crowd streets - Reuters",
+        "Anthropic says Trump admin has lifted export controls on Claude Fable 5 and Mythos 5",
+        "Three killed in Mexico City World Cup celebrations",
+        "Anthropic says US has lifted export controls on Fable and Mythos AI models after security fears",
+        "‘Tip of the iceberg’: nearly 500,000 New Yorkers lose health insurance due to Trump cuts",
+        "US supreme court rejects appeal from lawyer punished over effort to remove abusive priest"
+      ],
+      "summary": "Hoy, el mundo sigue de cerca la evolución de las tensiones en Oriente Medio, donde las conversaciones entre Estados Unidos e Irán sobre un posible acuerdo de paz enfrentan desafíos. En el frente internacional, se reportan movimientos diplomáticos y ataques que reflejan la complejidad del conflicto. En Chile, la atenció"
+    },
+    {
       "date": "2026-06-21",
       "headlines": [
         "Mideast Live Updates: New Round of U.S.-Iran Talks Set to Start in Switzerland",
@@ -107,24 +125,6 @@
         "Treasuries Rally as Traders Trim Fed Hike Bets After Iran Deal - Bloomberg.com"
       ],
       "summary": "El mundo sigue de cerca la evolución de la situación en Oriente Medio, donde las tensiones entre Irán y Estados Unidos siguen aumentando. A pesar de los anuncios de un posible acuerdo de paz, los ataques y contraataques continúan. En el frente internacional, se reportan ataques y movimientos diplomáticos que reflejan l"
-    },
-    {
-      "date": "2026-06-14",
-      "headlines": [
-        "Zelenskyy thanks UK for intercepting Russian shadow fleet oil tanker after armed forces board vessel - UK politics live",
-        "Middle East crisis live: Trump says Iran deal will be signed today but sources tell media Tehran ‘not yet’ taken final decision",
-        "Peter Thiel en Argentina: ¿vigilancia total como en China? - El Mostrador",
-        "The G7 Summit Is Dogged by Chaos and Divided by Trump",
-        "Israel accuses Hezbollah of ceasefire violation, issues displacement orders",
-        "Iran War Live Updates: U.S. and Tehran Send Mixed Signals on Emerging Peace Agreement",
-        "Here’s the latest.",
-        "British armed forces intercept Russian shadow fleet oil tanker in Channel",
-        "London startup to trial drug to prevent cancer therapy side-effect ‘cytokine storm’",
-        "The coach who bonded with Putin and took Curaçao to the World Cup",
-        "The Strait of Hormuz Has Been Closed for 100 Days. Why Aren’t Oil Prices Higher?",
-        "UK Forces Seize Russian Shadow Fleet Oil Tanker"
-      ],
-      "summary": "El mundo sigue de cerca la evolución de la situación en Oriente Medio, donde las tensiones entre Irán y Estados Unidos siguen aumentando. A pesar de los anuncios de un posible acuerdo de paz, los ataques y contraataques continúan. En Chile, el gobierno sigue trabajando en corregir deficiencias en la Ley Karin, mientras"
     }
   ]
 }
