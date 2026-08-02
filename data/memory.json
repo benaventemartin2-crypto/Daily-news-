@@ -1,6 +1,24 @@
 {
   "history": [
     {
+      "date": "2026-08-02",
+      "headlines": [
+        "Three killed after bomb detonated at Moscow restaurant, state media say",
+        "Five dead, 41 missing, after Indonesia ferry catches fire",
+        "Superávit histórico de Argentina: el rol de Chile y lo que viene con el Tratado Minero - BioBioChile",
+        "How Spain's migrant crisis created a political storm - whipped up by social media",
+        "Israeli soldiers jailed over Sde Teiman walkout",
+        "Far-Right Leaders Step Up Calls for Expelling Remaining Migrants in Ceuta",
+        "Antonio Walker, SNA: \"Chile cumple. Le pregunto a EEUU si ellos tienen la misma disposición\" - BioBioChile",
+        "Trump cancels planned attack on Iran, saying he reached an agreement over the 'perimeters of a deal'",
+        "July set to be driest on record for England and Wales after relentless heatwaves",
+        "Body of mountaineer Nirmal Purja recovered after Pakistan avalanche",
+        "El golpe de Estados Unidos que pone en cuestión la apuesta internacional de Kast",
+        "Trump Says He Canceled Strikes on Iran, Claiming Progress on Outlines of a Deal"
+      ],
+      "summary": "El mundo se enfrenta a una situación de alta tensión, con conflictos en varias regiones y un impacto significativo en los mercados globales. En el Medio Oriente, la escalada de violencia entre Estados Unidos e Irán ha llevado a un aumento en el precio del petróleo, lo que podría tener un efecto negativo en la economía."
+    },
+    {
       "date": "2026-07-30",
       "headlines": [
         "Poland’s Leader Says Russian Missile May Have Struck Its Territory During Ukraine Attack",
@@ -107,24 +125,6 @@
         "Can AI systems make moral decisions in war?"
       ],
       "summary": "El mundo se encuentra en una situación de alta tensión, especialmente en el escenario internacional, donde las relaciones entre Estados Unidos, Irán y Rusia siguen siendo un foco de atención. La situación en Ucrania sigue siendo crítica, con ataques y contraataques que reflejan la complejidad del conflicto. En el ámbit"
-    },
-    {
-      "date": "2026-07-20",
-      "headlines": [
-        "Keir Starmer meets with king to formally resign as PM before Andy Burnham takes over – UK politics live",
-        "Iran vows not a ‘single drop’ of oil or gas will pass strait of Hormuz as US carries out ninth night of strikes – Middle East crisis live",
-        "Thousands of Cockroach party protesters defy police by marching in Delhi",
-        "Burnham Set to Become Britain’s First Openly Roman Catholic Prime Minister",
-        "Zelensky Faces Pressure to Remove Ukraine’s Top General",
-        "Here’s the latest.",
-        "Maine Democrats rally around Troy Jackson to replace Graham Platner in crucial Senate race – US politics live",
-        "Another U.S. Service Member Is Killed as Iran War Expands",
-        "Occupied West Bank World Cup screening halted for funeral",
-        "UK to get a new prime minister as Trump slams Britain as 'Poverty Stricken Disaster'",
-        "China delivers a one-two punch to America’s AI dominance",
-        "Deaths of 2 U.S. Troops in Jordan Brings American Toll in the War With Iran to 16"
-      ],
-      "summary": "El mundo se encuentra en una situación de alta tensión, especialmente en el escenario internacional, donde las relaciones entre Estados Unidos, Irán y Rusia siguen siendo un foco de atención. La situación en Ucrania sigue siendo crítica, con ataques y contraataques que reflejan la complejidad del conflicto. En Chile, l"
     }
   ]
 }
