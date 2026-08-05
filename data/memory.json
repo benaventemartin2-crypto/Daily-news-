@@ -1,6 +1,24 @@
 {
   "history": [
     {
+      "date": "2026-08-05",
+      "headlines": [
+        "Russian strike kills at least 17 as Zelensky says interceptors could have saved lives",
+        "US refunds $100bn of Donald Trump’s ‘liberation day’ tariffs",
+        "Russia’s Deadly Missile Attack on Kyiv Exploits Ukraine’s Depleted Air Defenses",
+        "Police chief considers joining legal action over PC Andrew Harper killers’ early release – UK politics live",
+        "Israeli raid deepens fears across West Bank refugee camps",
+        "Nato confirms drone sighting near Ukrainian plane at German airport after ‘security incident’ – Europe live",
+        "Trump’s AI testing plan is limited and vague",
+        "Burnham not considering public inquiry into UK activities of Jeffrey Epstein",
+        "Michigan Senate Democratic primary race remains too close to call as El-Sayed holds narrow lead – US politics live",
+        "India’s severe monsoon season causes more than 100 deaths since July",
+        "Two Cities With a Tangled History",
+        "Zelenskyy calls for more air defences as Russian attack on Kyiv kills at least 17"
+      ],
+      "summary": "El mundo se enfrenta a una situación de alta tensión, con conflictos en varias regiones y un impacto significativo en los mercados globales. En el Medio Oriente, la escalada de violencia entre Estados Unidos e Irán ha llevado a un aumento en el precio del petróleo, lo que podría tener un efecto negativo en la economía."
+    },
+    {
       "date": "2026-08-03",
       "headlines": [
         "Ariana Grande to take a break from public life amid 'endless' scrutiny",
@@ -107,24 +125,6 @@
         "Israeli protesters denounce deadly settler violence"
       ],
       "summary": "El mundo se enfrenta a una situación de alta tensión, con incendios forestales en Francia y España que han llevado a la evacuación de cientos de miles de personas. En el ámbito internacional, las relaciones entre Estados Unidos, Irán y Rusia siguen siendo un foco de atención, con tensiones que afectan los mercados glob"
-    },
-    {
-      "date": "2026-07-24",
-      "headlines": [
-        "Tens of thousands evacuated from French tourist spot as wildfires spread",
-        "Trump to slap 'sweeping' new tariffs on 60 trade partners as global duties expire",
-        "Trump’s new tariffs ‘a sales tax that will make life harder for Americans’, say Democrats – US politics live",
-        "With Hopes High for New H.I.V. Prevention Pill, Merck Takes Steps to Ensure Access",
-        "First Thing: Trump imposes fresh tariffs on UK, EU and dozens of other trading partners",
-        "India ‘cockroach’ activist Sonam Wangchuk ends hunger strike as protests spread",
-        "France evacuates Cap Ferret peninsula as Spain battles to prevent wildfires merging near Madrid – Europe live",
-        "South African court pauses impeachment process against president",
-        "VW profits plunge and deep job cuts loom amid tough Chinese competition",
-        "South Africa's president wins bid to temporarily halt impeachment inquiry over 'Farmgate'",
-        "France orders total evacuation of Cap Ferret peninsula as wildfire spreads",
-        "India's 'cockroach' protesters hold talks with government as stalemate continues"
-      ],
-      "summary": "El mundo se enfrenta a una situación de alta tensión, con incendios forestales en Francia que han llevado a la evacuación de más de 40.000 personas en la península de Cap Ferret. En el ámbito internacional, las relaciones entre Estados Unidos, Irán y Rusia siguen siendo un foco de atención, con tensiones que afectan lo"
     }
   ]
 }
