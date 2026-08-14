@@ -1,6 +1,24 @@
 {
   "history": [
     {
+      "date": "2026-08-14",
+      "headlines": [
+        "Stolen Matisse artworks recovered by police in Brazil",
+        "Donald Trump to give speech on crime and safety during New York visit – US politics live",
+        "EE. UU. presiona a Chile y la región para abandonar la Corte Penal Internacional - El Mostrador",
+        "UK universities face ‘financial crisis’ amid collapse in international students",
+        "More Wildfires and Extreme Heat Roil Europe, but Relief Is on the Horizon",
+        "19 people taken to hospital after West Midlands fire, as thousands evacuated in Croatia – Europe live",
+        "'Unprecedented' rain in Japan kills eight people",
+        "Scrutiny over Farage’s finances has ‘hurt Reform UK support’",
+        "Kevin Rideout, American Missionary Kidnapped in Niger, Is Released",
+        "Seven killed in tunnel accident at Indian hydropower project",
+        "Ryanair window that passenger was partly sucked out of was broken by engine debris, report finds",
+        "Brazil’s Disease-Fighting Mosquitoes"
+      ],
+      "summary": "El mundo sigue sumido en una situación de alta tensión, con conflictos en varias regiones y un impacto significativo en los mercados globales. En el ámbito internacional, la escalada de violencia y los desafíos políticos continúan siendo temas centrales. En Chile, la atención se centra en la presión de Estados Unidos p"
+    },
+    {
       "date": "2026-08-13",
       "headlines": [
         "Zambians voting as president bids for second term",
@@ -107,24 +125,6 @@
         "Zelenskyy calls for more air defences as Russian attack on Kyiv kills at least 17"
       ],
       "summary": "El mundo se enfrenta a una situación de alta tensión, con conflictos en varias regiones y un impacto significativo en los mercados globales. En el Medio Oriente, la escalada de violencia entre Estados Unidos e Irán ha llevado a un aumento en el precio del petróleo, lo que podría tener un efecto negativo en la economía."
-    },
-    {
-      "date": "2026-08-03",
-      "headlines": [
-        "Ariana Grande to take a break from public life amid 'endless' scrutiny",
-        "Aung San Suu Kyi appears healthy in first confirmed outside contact for 2.5 years",
-        "Todd Blanche formally withdraws Trump's 'anti-weaponisation' fund plan",
-        "South-eastern Europe faces heatwave energy crunch as Romania detonates Danube rock to increase water flow – Europe live",
-        "Middle East crisis live: Iran denies Trump’s claims that talks due to take place",
-        "Iran Says No Current Talks With U.S. After Trump Cites Progress on the Strait of Hormuz",
-        "Reform UK hold press conference on immigration after criticism of pledge to use Navy to stop small boats – politics live",
-        "Singapore Bans Band Massive Attack for Displaying Palestinian Flag",
-        "Alibaba shares rally after unveiling its 'most powerful' AI model as U.S.-China competition heats up",
-        "Tourism price wars threaten to dim a rare bright spot in China's consumer spending",
-        "Vinos de Chile confía en que negociaciones del gobierno con EE.UU. permitan excluir al vino de aranceles",
-        "Francisco Urdinez y el equilibrio de las relaciones con China y EE.UU.: “El escenario perfecto que tuvo Chile por 25 años se acabó”"
-      ],
-      "summary": "El mundo se enfrenta a una situación de alta tensión, con conflictos en varias regiones y un impacto significativo en los mercados globales. En el Medio Oriente, la escalada de violencia entre Estados Unidos e Irán ha llevado a un aumento en el precio del petróleo, lo que podría tener un efecto negativo en la economía "
     }
   ]
 }
